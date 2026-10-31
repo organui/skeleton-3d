@@ -713,16 +713,28 @@ export type View =
   | 'Right foot'
 
 // Whole-body views fit the full skeleton; regional views fit only the listed
-// structures so small bones such as the hand fill the stage.
-export const views: { view: View; direction: [number, number, number]; region?: string[] }[] = [
+// structures so small bones such as the hand fill the stage. Focused views also
+// ghost everything outside the region, because the hand and foot sit right
+// beside the femur and the other foot.
+export const views: {
+  view: View
+  direction: [number, number, number]
+  region?: string[]
+  focus?: boolean
+}[] = [
   { view: 'Anterior', direction: [0, 0, 1] },
   { view: 'Posterior', direction: [0, 0, -1] },
   { view: 'Right lateral', direction: [-1, 0, 0] },
   { view: 'Skull', direction: [-0.55, 0.1, 1], region: ['Skull'] },
   { view: 'Thorax', direction: [0, 0.15, 1], region: ['Thorax'] },
   { view: 'Spine', direction: [-0.45, 0, -1], region: ['Vertebral column'] },
-  { view: 'Right hand', direction: [0, 0, 1], region: ['Right upper limb:hand'] },
-  { view: 'Right foot', direction: [-0.6, 0.8, 0.9], region: ['Right lower limb:foot'] },
+  { view: 'Right hand', direction: [0, 0, 1], region: ['Right upper limb:hand'], focus: true },
+  {
+    view: 'Right foot',
+    direction: [-0.6, 0.8, 0.9],
+    region: ['Right lower limb:foot'],
+    focus: true,
+  },
 ]
 
 const handSubgroups = ['Carpal bones', 'Metacarpal bones', 'Phalanges of the hand']
@@ -779,7 +791,10 @@ export type Emphasis = 'normal' | 'selected' | 'ghosted'
 // With nothing selected every structure keeps its own color. A selection
 // keeps its structure solid and ghosts the rest so it stays visible even
 // when it sits behind or inside other geometry.
-export function emphasis(id: string, selected: string | null): Emphasis {
-  if (!selected) return 'normal'
-  return id === selected ? 'selected' : 'ghosted'
+// A focused view ghosts structures outside its region until another view is chosen.
+export function emphasis(id: string, selected: string | null, focus?: View | null): Emphasis {
+  if (selected) return id === selected ? 'selected' : 'ghosted'
+  if (focus && views.find((v) => v.view === focus)?.focus && !inView(byId[id], focus))
+    return 'ghosted'
+  return 'normal'
 }
