@@ -27,6 +27,7 @@ export type ViewerHandle = {
 type Props = {
   selected: string | null
   hidden: Set<string>
+  focus: View | null
   onSelect: (id: string) => void
   onReady: (ready: boolean) => void
   onFreeView: () => void
@@ -207,8 +208,9 @@ function Model({
   model,
   selected,
   hidden,
+  focus,
   onSelect,
-}: Pick<Props, 'selected' | 'hidden' | 'onSelect'> & { model: Group }) {
+}: Pick<Props, 'selected' | 'hidden' | 'focus' | 'onSelect'> & { model: Group }) {
   const { invalidate } = useThree()
   useEffect(() => {
     model.traverse((object) => {
@@ -218,7 +220,7 @@ function Model({
       if (!structure) return
       object.visible = !hidden.has(id)
       const material = object.material as MeshStandardMaterial
-      const state = emphasis(id, selected)
+      const state = emphasis(id, selected, focus)
       material.color.set(state === 'ghosted' ? ghostColor(structure.color) : structure.color)
       material.emissive.set(state === 'selected' ? structure.color : '#000000')
       material.emissiveIntensity = state === 'selected' ? 0.35 : 0
@@ -229,7 +231,7 @@ function Model({
       material.needsUpdate = true
     })
     invalidate()
-  }, [model, selected, hidden, invalidate])
+  }, [model, selected, hidden, focus, invalidate])
   return (
     <primitive
       object={model}
@@ -408,6 +410,7 @@ export default function Viewer(props: Props) {
             model={model}
             selected={props.selected}
             hidden={props.hidden}
+            focus={props.focus}
             onSelect={props.onSelect}
           />
           <CameraControls

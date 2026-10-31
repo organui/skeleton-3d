@@ -34,6 +34,8 @@ export default function App() {
   const [selected, setSelected] = useState<string | null>(null)
   const [hidden, setHidden] = useState<Set<string>>(new Set())
   const [view, setView] = useState<View | 'Custom view'>(defaultView)
+  // The last named view stays in focus while the user orbits away from it.
+  const [focus, setFocus] = useState<View>(defaultView)
   const [ready, setReady] = useState(false)
   const [step, setStep] = useState<number | null>(null)
   const [announcement, setAnnouncement] = useState('')
@@ -117,11 +119,13 @@ export default function App() {
     setStep(null)
     controls.current?.preset(defaultView)
     setView(defaultView)
+    setFocus(defaultView)
     setAnnouncement(`Explorer reset. All structures visible, ${defaultView.toLowerCase()} view.`)
   }
   function preset(next: View) {
     controls.current?.preset(next)
     setView(next)
+    setFocus(next)
   }
   function toggle(id: string) {
     const next = new Set(hidden)
@@ -207,6 +211,7 @@ export default function App() {
           <Viewer
             selected={selected}
             hidden={hidden}
+            focus={focus}
             onSelect={select}
             onReady={setReady}
             onFreeView={() => setView('Custom view')}
